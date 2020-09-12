@@ -41,6 +41,7 @@ class Client(sleekxmpp.ClientXMPP):
         self.register_plugin('xep_0004') # Data forms
         self.register_plugin('xep_0077') # In-band Registration
         self.register_plugin('xep_0045') # Mulit-User Chat (MUC)
+        #self.register_plugin('xep_0055') # Jabber Search
         self.register_plugin('xep_0047', {
             'auto_accept': True
         })
@@ -65,6 +66,35 @@ class Client(sleekxmpp.ClientXMPP):
 
     def alertFriend(self):
         self.get_roster()
+    
+    def listUsers(self):
+        users = self.Iq()
+        users['type'] = 'set'
+        users['to'] = 'search.redes2020.xyz'
+        users['from'] = "mafprueba@redes2020.xyz"
+        users['id'] = 'search_result'
+        itemXML = ET.fromstring("<query xmlns='jabber:iq:search'>\
+                                 <x xmlns='jabber:x:data' type='submit'>\
+                                    <field type='hidden' var='FORM_TYPE'>\
+                                        <value>jabber:iq:search</value>\
+                                    </field>\
+                                    <field var='Username'>\
+                                        <value>1</value>\
+                                    </field>\
+                                    <field var='search'>\
+                                        <value>*</value>\
+                                    </field>\
+                                </x>\
+                                </query>")
+        users.append(itemXML)
+        print(users)
+        try:
+            x = users.send()
+            print("Users" , x)
+        except IqError as e:
+            raise Exception("Unable list users", e)
+        except IqTimeout:
+            raise Exception("Server not responding")   
 
     def addRoster(self, jid, name):
         try:
@@ -104,14 +134,8 @@ class Client(sleekxmpp.ClientXMPP):
         from_account = "%s@%s" % (message['from'].user, message['from'].domain)
         print("%s received message from %s" % (self.instance_name, from_account))
 
-        if self.instance_name in message['body'].lower():
-            print ("Caught test message: %s" % message)
-            message.reply("%s was listening!" % self.instance_name).send()
-        else:
-            print ("Uncaught command from %s: %s" % (from_account, message['body']))
 
 clientxmpp = Client('mafprueba@redes2020.xyz', 'mafer1234', 'redes2020.xyz')
-clientxmpp.join_create_room('vacacio@conference.redes2020.xyz', 'prueba')
-clientxmpp.send_msg_room('vacacio@conference.redes2020.xyz', 'prueba participacion')
+clientxmpp.listUsers()
 
 #clientxmpp.deleteUser('test1@redes2020.xyz')
