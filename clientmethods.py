@@ -49,7 +49,6 @@ class Client(sleekxmpp.ClientXMPP):
         if self.connect():
             print("Opened XMPP Connection")
             self.process(block=False)
-
         else:
             raise Exception("Unable to connect to Redes Jabber server")
 
@@ -93,8 +92,42 @@ class Client(sleekxmpp.ClientXMPP):
             print("Users" , x)
         except IqError as e:
             raise Exception("Unable list users", e)
+            sys.exit(1)
         except IqTimeout:
             raise Exception("Server not responding")   
+    
+
+    def getUserInfo(self, jid):
+        user = self.Iq()
+        user['type'] = 'set'
+        user['to'] = 'search.redes2020.xyz'
+        user['from'] = "mafprueba@redes2020.xyz"
+        user['id'] = 'search_result'
+        query = "<query xmlns='jabber:iq:search'>\
+                                 <x xmlns='jabber:x:data' type='submit'>\
+                                    <field type='hidden' var='FORM_TYPE'>\
+                                        <value>jabber:iq:search</value>\
+                                    </field>\
+                                    <field var='Username'>\
+                                        <value>1</value>\
+                                    </field>\
+                                    <field var='search'>\
+                                        <value>" + jid + "</value>\
+                                    </field>\
+                                </x>\
+                                </query>"
+        print(query)
+        itemXML = ET.fromstring(query)
+        user.append(itemXML)
+        print(user)
+        try:
+            x = user.send()
+            print(x)
+        except IqError as e:
+            raise Exception("Unable to get user information", e)
+        except IqTimeout:
+            raise Exception("Server not responding")   
+        
 
     def addRoster(self, jid, name):
         try:
@@ -102,6 +135,7 @@ class Client(sleekxmpp.ClientXMPP):
             print("User added to roster")
         except IqError:
             raise Exception("Unable to add user to rooster")
+            sys.exit(1)
         except IqTimeout:
             raise Exception("Server not responding") 
 
@@ -126,6 +160,7 @@ class Client(sleekxmpp.ClientXMPP):
             print("Account deleted succesfuly")
         except IqError as e:
             raise Exception("Unable to delete username", e)
+            sys.exit(1)
         except IqTimeout:
             raise Exception("Server not responding") 
 
@@ -136,6 +171,6 @@ class Client(sleekxmpp.ClientXMPP):
 
 
 clientxmpp = Client('mafprueba@redes2020.xyz', 'mafer1234', 'redes2020.xyz')
-clientxmpp.listUsers()
+clientxmpp.getUserInfo('holaamigo')
 
 #clientxmpp.deleteUser('test1@redes2020.xyz')
