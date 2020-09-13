@@ -78,7 +78,6 @@ class Client(sleekxmpp.ClientXMPP):
             raise Exception("Unable to connect to Redes Jabber server")
 
     def logout(self):
-        print("Closing XMPP Connection")
         self.disconnect(wait=False)
 
     def sendPresenceMessage(self, status, body):
@@ -92,7 +91,6 @@ class Client(sleekxmpp.ClientXMPP):
         roster = self.get_roster()
         for r in roster['roster']['items'].keys():
             self.contacts.append(r)
-        print(self.contacts)
         for jid in self.contacts:
             #to everyone in rooster send i just log in as an active notification
             self.sendNotification(jid, 'Im ready to start messaging', 'active')
@@ -152,7 +150,6 @@ class Client(sleekxmpp.ClientXMPP):
             message = base64.b64encode(img_file.read()).decode('utf-8')
         try:
             self.send_message(mto=recipient,mbody=message,mtype="chat")
-            print("Sending image")
         except IqError as e:
             raise Exception("Unable to send image", e)
         except IqTimeout:
@@ -215,10 +212,9 @@ class Client(sleekxmpp.ClientXMPP):
                                 </x>\
                                 </query>")
         users.append(itemXML)
-        print(users)
         try:
             x = users.send()
-            print("Users" , x)
+            print(x)
         except IqError as e:
             raise Exception("Unable list users", e)
             sys.exit(1)
@@ -245,10 +241,8 @@ class Client(sleekxmpp.ClientXMPP):
                                     </field>\
                                 </x>\
                                 </query>"
-        print(query)
         itemXML = ET.fromstring(query)
         user.append(itemXML)
-        print(user)
         try:
             x = user.send()
             print(x)
@@ -261,7 +255,7 @@ class Client(sleekxmpp.ClientXMPP):
     def addRoster(self, jid, name):
         try:
             self.send_presence_subscription(pto=jid)
-            print("User added to roster")
+            return 1
         except IqError:
             raise Exception("Unable to add user to rooster")
             sys.exit(1)
@@ -279,6 +273,7 @@ class Client(sleekxmpp.ClientXMPP):
     def join_create_room(self, room, nickname):
         try:
             self.plugin['xep_0045'].joinMUC(room, nickname)
+            return 1
         except IqError as e:
             raise Exception("Unable to create room", e)
         except IqTimeout:
@@ -291,10 +286,9 @@ class Client(sleekxmpp.ClientXMPP):
         delete['from'] = username
         itemXML = ET.fromstring("<query xmlns='jabber:iq:register'><remove/></query>")
         delete.append(itemXML)
-        print(delete)
         try:
             delete.send(now=True)
-            print("Account deleted succesfuly")
+            print("Account deleted succesfuly", x)
         except IqError as e:
             raise Exception("Unable to delete username", e)
             sys.exit(1)
@@ -309,9 +303,10 @@ class Client(sleekxmpp.ClientXMPP):
             with open("imageToSave.png", "wb") as fh:
                 fh.write(received)
         else:
-            print("XMPP Message: %s" % message['body'])
+            #print("XMPP Message: %s" % message['body'])
             from_account = "%s@%s" % (message['from'].user, message['from'].domain)
-            print("%s received message from %s" % (self.instance_name, from_account))
+            console.print(from_account, message['body'])
+            #print("%s received message from %s" % (self.instance_name, from_account))
 
     
         
@@ -320,7 +315,7 @@ class Client(sleekxmpp.ClientXMPP):
 
 
 #clientxmpp = Client('mafprueba@redes2020.xyz', 'mafer1234', 'redes2020.xyz')
-#clientxmpp.listFriends()
+#clientxmpp.listUsers()
 #clientxmpp.send_file('fran@redes2020.xyz', 'prueba.jpg')
 
 #clientxmpp.deleteUser('test1@redes2020.xyz')
