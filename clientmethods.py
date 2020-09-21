@@ -65,8 +65,9 @@ class Client(sleekxmpp.ClientXMPP):
         self.register_plugin('xep_0004') # Data forms
         self.register_plugin('xep_0077') # In-band Registration
         self.register_plugin('xep_0045') # Mulit-User Chat (MUC)
-        self.register_plugin('xep_0096') # Jabber Search
+        self.register_plugin('xep_0096') # Send file 
         self.register_plugin('xep_0065')
+    
         self.register_plugin('xep_0047', {
             'auto_accept': True
         })
@@ -214,7 +215,24 @@ class Client(sleekxmpp.ClientXMPP):
         users.append(itemXML)
         try:
             x = users.send()
-            print(x)
+            data = []
+            temp = []
+            cont = 0
+            for i in x.findall('.//{jabber:x:data}value'):
+                cont += 1
+                txt = ''
+                if i.text != None:
+                    txt = i.text
+
+                temp.append(txt)
+                #contador hasta 4 porque el servidor solo retorna 4 values field por usuario
+                #email, jid, username y name
+                if cont == 4:
+                    cont = 0
+                    data.append(temp)
+                    temp = []
+
+            return data
         except IqError as e:
             raise Exception("Unable list users", e)
             sys.exit(1)
@@ -245,7 +263,24 @@ class Client(sleekxmpp.ClientXMPP):
         user.append(itemXML)
         try:
             x = user.send()
-            print(x)
+            data = []
+            temp = []
+            cont = 0
+            for i in x.findall('.//{jabber:x:data}value'):
+                cont += 1
+                txt = ''
+                if i.text != None:
+                    txt = i.text
+
+                temp.append(txt)
+                #contador hasta 4 porque el servidor solo retorna 4 values field por usuario
+                #email, jid, username y name
+                if cont == 4:
+                    cont = 0
+                    data.append(temp)
+                    temp = []
+
+            return data
         except IqError as e:
             raise Exception("Unable to get user information", e)
         except IqTimeout:
@@ -279,6 +314,43 @@ class Client(sleekxmpp.ClientXMPP):
         except IqTimeout:
             raise Exception("Server not responding")
 
+
+    def sendBytestreamStanza(self, filename, to):
+        offer = self.Iq()
+        offer['type'] = 'set'
+        offer['id'] = 'offer1'
+        offer['to'] = to
+        siXML = ET.fromstring("<si xmlns='http://jabber.org/protocol/si'\
+                                id='a0'\
+                                mime-type='text/plain'\
+                                profile='http://jabber.org/protocol/si/profile/file-transfer'>\
+                                    <file xmlns='http://jabber.org/protocol/si/profile/file-transfer'\
+          name='test.txt'\
+          size='4066'/>\
+              <feature xmlns='http://jabber.org/protocol/feature-neg'>\
+                                    <x xmlns='jabber:x:data' type='form'>\
+                                        <field var='stream-method' type='list-single'>\
+                                        <option><value>http://jabber.org/protocol/bytestreams</value></option>\
+                                        <option><value>http://jabber.org/protocol/ibb</value></option>\
+                                        </field>\
+                                    </x>\
+                                    </feature>\
+                                </si>")
+
+        offer.append(siXML)
+        try:
+            offer.send()
+        except IqError as e:
+            raise Exception("Unable to delete username", e)
+        except IqTimeout:
+            raise Exception("Server not responding") 
+
+        #stream = self['xep_0047'].open_stream(to)
+
+        #print(stream)
+        #with open(filename) as f:
+         #   data = f.read()
+          #  stream.sendall(data)
 
     def deleteUser(self, username):
         delete = self.Iq()
@@ -315,7 +387,7 @@ class Client(sleekxmpp.ClientXMPP):
 
 
 #clientxmpp = Client('mafprueba@redes2020.xyz', 'mafer1234', 'redes2020.xyz')
-#clientxmpp.listUsers()
+#clientxmpp.sendBytestreamStanza('prueba.png', 'prueba1@redes2020.xyz')
 #clientxmpp.send_file('fran@redes2020.xyz', 'prueba.jpg')
 
 #clientxmpp.deleteUser('test1@redes2020.xyz')

@@ -135,7 +135,30 @@ def getContacts(client):
 
 def getUsers(client):
     data = client.listUsers()
-    print(data)
+    table = Table(show_footer=False)
+    table.add_column("Email", no_wrap=True)
+    table.add_column("JID", no_wrap=True)
+    table.add_column("Username", no_wrap=True)
+    table.add_column("Name", no_wrap=True)
+    table.title = (
+    "[not italic]:girl_light_skin_tone: Users In Server [not italic]:boy_light_skin_tone:")
+    for row in data:
+        table.add_row(*row)
+
+    table.columns[3].header_style = "bold red"
+    table.columns[2].header_style = "bold green"
+    table.columns[1].header_style = "bold blue"
+    table.columns[0].header_style = "cyan"
+    table.row_styles = ["none", "dim"]
+    table.border_style = "bright_yellow"
+    for x in [
+        box.SQUARE,
+        box.MINIMAL,
+        box.SIMPLE,
+        box.SIMPLE_HEAD,
+    ]:
+        table.box = x
+    console.print(table, justify="left")
 
 def addToRoster(client):
     questions = [
@@ -164,7 +187,7 @@ def getInfoUser(client):
     questions = [
         {
             'type': 'input',
-            'message': 'Enter jid to get info',
+            'message': 'Enter username to get info',
             'name': 'username'
 
         }
@@ -172,8 +195,30 @@ def getInfoUser(client):
     ]
     answers = prompt(questions, style=custom_style_2)
     data = client.getUserInfo(answers['username'])
-    #se arruino el get user info solo devuelve la stanza con valores vaciones
-    print(data)
+    table = Table(show_footer=False)
+    table.add_column("Email", no_wrap=True)
+    table.add_column("JID", no_wrap=True)
+    table.add_column("Username", no_wrap=True)
+    table.add_column("Name", no_wrap=True)
+    table.title = (
+    "[not italic]:girl_light_skin_tone: Username Information [not italic]:boy_light_skin_tone:")
+    for row in data:
+        table.add_row(*row)
+
+    table.columns[3].header_style = "bold red"
+    table.columns[2].header_style = "bold green"
+    table.columns[1].header_style = "bold blue"
+    table.columns[0].header_style = "cyan"
+    table.row_styles = ["none", "dim"]
+    table.border_style = "bright_yellow"
+    for x in [
+        box.SQUARE,
+        box.MINIMAL,
+        box.SIMPLE,
+        box.SIMPLE_HEAD,
+    ]:
+        table.box = x
+    console.print(table, justify="left")
 
 def sendMes(client):
     questions = [
