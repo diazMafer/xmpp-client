@@ -268,6 +268,35 @@ def joinRoom(client):
         else:
             console.print(":warning:" + "Room name has to be something like:" + "roomname@conference.redes2020.xyz")
 
+def createRoom(client):
+    questions = [
+        {
+            'type': 'input',
+            'message': 'Enter room',
+            'name': 'room'
+
+        },
+        {
+            'type': 'input',
+            'message': 'Enter room alias',
+            'name': 'alias'
+
+        }
+    ]
+
+    incorrect = True
+    while incorrect:
+        answers = prompt(questions, style=custom_style_2)
+        if ('conference' in answers['room']):
+            res = client.join_create_room(answers['room'], answers['alias'])
+            if (res == 1):
+                console.print(":heavy_check_mark:" + "You have join to room " + answers['room'])
+                incorrect = False
+            else:
+                print("fail")
+        else:
+            console.print(":warning:" + "Room name has to be something like:" + "roomname@conference.redes2020.xyz")
+
 def sendRoomMesg(client):
     questions = [
         {
@@ -312,6 +341,43 @@ def sendFile(client):
     client.send_filte(answers['username'], answers['file'])
     console.print(answers['username'], ': ', answers['file'])
 
+def sendPresenceStanza(client):
+    questions = [
+    {
+        'type': 'checkbox',
+        'qmark': '😃',
+        'message': 'Select Presence Stanza Options',
+        'name': 'show',
+        'choices': [ 
+            Separator('= Show ='),
+            {
+                'name': 'away'
+            },
+            {
+                'name': 'chat'
+            },
+            {
+                'name': 'dnd'
+            },
+            {
+                'name': 'xa'
+            },
+            
+        ],
+        'validate': lambda answer: 'You must choose at least one option on show.' \
+            if len(answer) == 0 else True
+        },
+        {
+            'type': 'input',
+            'message': 'Enter status',
+            'name': 'status'
+
+        }
+    ]
+
+    answers = prompt(questions, style=custom_style_2)
+    client.sendPresenceMessage(answers['status'], answers['show'][0], )
+    
 ans=True
 client = None
 while ans:
@@ -329,7 +395,8 @@ while ans:
     11. Send Presence Message
     12. Join Room
     13. Send Room Message
-    13. Exit/Quit
+    14. Send Presence Stanza
+    15. Exit/Quit
     """)
     ans=input("What would you like to do? ") 
     if ans=="1": 
@@ -358,7 +425,9 @@ while ans:
         joinRoom(client)
     elif ans=="13":
         sendRoomMesg(client)
-    else:
+    elif ans=="14":
+        sendPresenceStanza(client)
+    elif ans=="15":
         exit()
     
 

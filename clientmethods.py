@@ -6,6 +6,7 @@ import base64
 import time
 import threading
 import binascii
+import easygui
 from rich.console import Console
 from rich.highlighter import RegexHighlighter
 from rich.theme import Theme
@@ -14,6 +15,7 @@ from rich.measure import Measurement
 from rich import box
 from rich.text import Text
 from rich.console import Console
+
 
 
 class EmailHighlighter(RegexHighlighter):
@@ -54,6 +56,10 @@ class Client(sleekxmpp.ClientXMPP):
         self.add_event_handler('message', self.receive)
         self.add_event_handler("changed_subscription", self.alertFriend)
         self.add_event_handler("changed_status", self.wait_for_presences)
+        self.add_event_handler("presence_subscribe", self.add_to_roster_notifcation)
+        self.add_event_handler("presence_unsubscribe", self.remove_to_roster_notifcation)
+        self.add_event_handler("got_offline", self.user_isoffline)
+        self.add_event_handler("got_online", self.user_isonline)
 
         self.received = set()
         self.contacts = []
@@ -81,11 +87,11 @@ class Client(sleekxmpp.ClientXMPP):
     def logout(self):
         self.disconnect(wait=False)
 
-    def sendPresenceMessage(self, status, body):
+    def sendPresenceMessage(self, status, show):
         #conectar
         #ingresar a un room
         #actualizar manual 
-        self.send_presence()
+        self.send_presence(pshow=show, pstatus=status)
 
     def start(self, event):
         self.send_presence(pshow='chat', pstatus='Disponible')
@@ -95,8 +101,57 @@ class Client(sleekxmpp.ClientXMPP):
         for jid in self.contacts:
             #to everyone in rooster send i just log in as an active notification
             self.sendNotification(jid, 'Im ready to start messaging', 'active')
+    
+    # Trigger when someone got offline
+    def user_isoffline(self, presence):        
+        if presence['from'].bare != self.boundjid.bare:
+            table = Table()
+            table.add_column("Disconected User Notification", no_wrap=True)
+            table.columns[0].header_style = "cyan"
+            table.border_style = "yellow"
+            msg = presence['from'].bare + " is offline"
+            table.add_row(msg)
+
+            console = Console()
+            console.print(table, justify="center")
+
+    def add_to_roster_notifcation(self, presence):
+        if presence['from'].bare != self.boundjid.bare:
+            table = Table()
+            table.add_column("Added to Roster Notification", no_wrap=True)
+            table.columns[0].header_style = "cyan"
+            table.border_style = "yellow"
+            msg = presence['from'].bare + " added you to their roster"
+            table.add_row(msg)
+
+            console = Console()
+            console.print(table, justify="center")
+    
+    def remove_to_roster_notifcation(self, presence):
+        if presence['from'].bare != self.boundjid.bare:
+            table = Table()
+            table.add_column("Remove from Roster Notification", no_wrap=True)
+            table.columns[0].header_style = "cyan"
+            table.border_style = "yellow"
+            msg = presence['from'].bare + " removed you from their roster"
+            table.add_row(msg)
+
+            console = Console()
+            console.print(table, justify="center")
+
+    # Trigger when someone got online
+    def user_isonline(self, presence):
+        if presence['from'].bare != self.boundjid.bare:
+            table = Table()
+            table.add_column("Conected User Notification", no_wrap=True)
+            table.columns[0].header_style = "cyan"
+            table.border_style = "yellow"
+            msg = presence['from'].bare + " is online"
+            table.add_row(msg)
+
+            console = Console()
+            console.print(table, justify="center")
         
-                
     #example code to iterate all roster including groups took from rooster_browser https://github.com/fritzy/SleekXMPP/blob/develop/examples/roster_browser.py
     def listFriends(self):
         try:
@@ -162,6 +217,18 @@ class Client(sleekxmpp.ClientXMPP):
         """
         Track how many roster entries have received presence updates.
         """
+        if pres['show'] != "" and pres['from'].bare != self.boundjid.bare:
+            table = Table()
+            table.add_column("Change Status Notification", no_wrap=True)
+            table.columns[0].header_style = "cyan"
+            table.border_style = "yellow"
+            msg = pres['from'].bare + " changed status to:  " + pres['show']
+            table.add_row(msg)
+
+            console = Console()
+            console.print(table, justify="center")
+        
+
         self.received.add(pres['from'].bare)
         if len(self.received) >= len(self.client_roster.keys()):
             self.presences_received.set()
@@ -175,8 +242,8 @@ class Client(sleekxmpp.ClientXMPP):
         message = self.Message()
         message['to'] = to
         message['type'] = 'chat'
-        message['body'] = body
         if (ntype == 'active'):
+            message['body'] = body
             itemXML = ET.fromstring("<active xmlns='http://jabber.org/protocol/chatstates'/>")
         elif (ntype == 'composing'):
             itemXML = ET.fromstring("<composing xmlns='http://jabber.org/protocol/chatstates'/>")
@@ -266,6 +333,7 @@ class Client(sleekxmpp.ClientXMPP):
             data = []
             temp = []
             cont = 0
+            print(x)
             for i in x.findall('.//{jabber:x:data}value'):
                 cont += 1
                 txt = ''
@@ -304,6 +372,18 @@ class Client(sleekxmpp.ClientXMPP):
     
     def send_msg_room(self, room, body):
         self.send_message(mto=room, mbody=body, mtype='groupchat')
+
+    def create_room(self, room, nickname):
+        try:
+            self.plugin['xep_0045'].joinMUC(room, nickname, pstatus="Conferencia Creada", pfrom=self.boundjid.bare, wait=True)
+            self.plugin['xep_0045'].setAffiliation(room, self.boundjid.bare, affiliation='owner')
+            self.plugin['xep_0045'].configureRoom(room, ifrom=self.boundjid.bare)
+            return 1
+        except IqError as e:
+            raise Exception("Unable to create room", e)
+        except IqTimeout:
+            raise Exception("Server not responding")
+
     
     def join_create_room(self, room, nickname):
         try:
@@ -360,7 +440,7 @@ class Client(sleekxmpp.ClientXMPP):
         delete.append(itemXML)
         try:
             delete.send(now=True)
-            print("Account deleted succesfuly", x)
+            print("Account deleted succesfuly")
         except IqError as e:
             raise Exception("Unable to delete username", e)
             sys.exit(1)
@@ -375,19 +455,5 @@ class Client(sleekxmpp.ClientXMPP):
             with open("imageToSave.png", "wb") as fh:
                 fh.write(received)
         else:
-            #print("XMPP Message: %s" % message['body'])
             from_account = "%s@%s" % (message['from'].user, message['from'].domain)
             console.print(from_account, message['body'])
-            #print("%s received message from %s" % (self.instance_name, from_account))
-
-    
-        
-        #received falta que cuando alguien envia un 'active' responder que yo estoy active con un send notifcation type = active
-            
-
-
-#clientxmpp = Client('mafprueba@redes2020.xyz', 'mafer1234', 'redes2020.xyz')
-#clientxmpp.sendBytestreamStanza('prueba.png', 'prueba1@redes2020.xyz')
-#clientxmpp.send_file('fran@redes2020.xyz', 'prueba.jpg')
-
-#clientxmpp.deleteUser('test1@redes2020.xyz')

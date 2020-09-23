@@ -14,22 +14,25 @@ questions = [
     {
         'type': 'checkbox',
         'qmark': '😃',
-        'message': 'Select toppings',
-        'name': 'choice',
+        'message': 'Select Presence Stanza Options',
+        'name': 'show',
         'choices': [ 
-            Separator('= The Meats ='),
+            Separator('= Show ='),
             {
-                'name': 'Ham'
+                'name': 'away'
             },
             {
-                'name': 'Ground Meat'
+                'name': 'chat'
             },
             {
-                'name': 'Bacon'
+                'name': 'dnd'
+            },
+            {
+                'name': 'xa'
             },
             
         ],
-        'validate': lambda answer: 'You must choose at least one topping.' \
+        'validate': lambda answer: 'You must choose at least one option on show.' \
             if len(answer) == 0 else True
     }
 ]
