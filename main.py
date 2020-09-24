@@ -12,6 +12,8 @@ from rich import box
 from rich.text import Text
 
 
+isLogin = False
+
 class EmailHighlighter(RegexHighlighter):
     """Apply style to anything that looks like an email."""
 
@@ -46,6 +48,7 @@ def registerAccount():
         console.print("Fail")
 
 def login():
+    global isLogin
     questions = [
         {
             'type': 'input',
@@ -62,9 +65,11 @@ def login():
     ]
     answers = prompt(questions, style=custom_style_2)
     clientxmpp = clientmethods.Client(answers['username'], answers['password'], 'redes2020.xyz')
+    isLogin = True
     return clientxmpp
 
 def logout(client):
+    global isLogin 
     questions = [
         {
             'type': 'confirm',
@@ -76,6 +81,7 @@ def logout(client):
     answers = prompt(questions, style=custom_style_2)
     if answers['logout']:
         client.logout()
+        isLogin = False
         console.print(":waving_hand:" + "You have succesfully sign out from your account")
     else:
         return
@@ -288,9 +294,9 @@ def createRoom(client):
     while incorrect:
         answers = prompt(questions, style=custom_style_2)
         if ('conference' in answers['room']):
-            res = client.join_create_room(answers['room'], answers['alias'])
+            res = client.create_room(answers['room'], answers['alias'])
             if (res == 1):
-                console.print(":heavy_check_mark:" + "You have join to room " + answers['room'])
+                console.print(":heavy_check_mark:" + "You have create room " + answers['room'])
                 incorrect = False
             else:
                 print("fail")
@@ -338,7 +344,7 @@ def sendFile(client):
         }
     ]
     answers = prompt(questions, style=custom_style_2)
-    client.send_filte(answers['username'], answers['file'])
+    client.send_file(answers['username'], answers['file'])
     console.print(answers['username'], ': ', answers['file'])
 
 def sendPresenceStanza(client):
@@ -392,7 +398,7 @@ while ans:
     8. Get User Info
     9. Send Message
     10. Send Files
-    11. Send Presence Message
+    11. Create Room
     12. Join Room
     13. Send Room Message
     14. Send Presence Stanza
@@ -406,29 +412,66 @@ while ans:
     elif ans=="3":
         logout(client)
     elif ans=="4":
-        deleteUserAccount(client)
+        if isLogin:
+            deleteUserAccount(client)
+        else:
+            console.print(":warning:" + " You must login first")
     elif ans=="5":
-        getContacts(client)
+        if isLogin:
+            getContacts(client)
+        else:
+            console.print(":warning:" + " You must login first")
     elif ans=="6":
-        getUsers(client)
+        if isLogin:
+            getUsers(client)
+        else:
+            console.print(":warning:" + " You must login first")
     elif ans=="7":
-        addToRoster(client)
+        if isLogin:
+            addToRoster(client)
+        else:
+            console.print(":warning:" + " You must login first")
     elif ans=="8":
-        getInfoUser(client)
+        if isLogin:
+            getInfoUser(client)
+        else:
+            console.print(":warning:" + " You must login first")
+            
     elif ans=="9":
-        sendMes(client)
+        if isLogin:
+            sendMes(client)
+        else:
+            console.print(":warning:" + " You must login first")
     elif ans=="10":
-        sendFile(client)
+        if isLogin:
+            sendFile(client)
+        else:
+            console.print(":warning:" + " You must login first")
     elif ans=="11":
-        print("mandar mensajes de presencia")
+        if isLogin:
+            createRoom(client)
+        else:
+            console.print(":warning:" + " You must login first")
     elif ans=="12":
-        joinRoom(client)
+        if isLogin:
+            joinRoom(client)
+        else:
+            console.print(":warning:" + " You must login first")
     elif ans=="13":
-        sendRoomMesg(client)
+        if isLogin:
+            sendRoomMesg(client)
+        else:
+            console.print(":warning:" + " You must login first")
     elif ans=="14":
-        sendPresenceStanza(client)
+        if isLogin:
+            sendPresenceStanza(client)
+        else:
+            console.print(":warning:" + " You must login first")
     elif ans=="15":
-        exit()
+        if isLogin:
+            console.print(":warning:" + " Logout first")
+        else:
+            exit()
     
 
 

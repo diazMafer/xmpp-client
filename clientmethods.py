@@ -1,3 +1,11 @@
+"""
+Universidad del Valle de guatemala 
+Maria Fernanda Lopez - 17160
+Client xmpp
+Clase base tomada de https://gist.github.com/deckerego/be1abbc079b206b793cf/revisions 
+Los métodos en que se difiere fueron agregados en base a la documentos y los xp e iq 
+a agregar con la clase sleekxmpp
+"""
 import sleekxmpp
 from sleekxmpp.exceptions import IqError, IqTimeout
 from sleekxmpp.xmlstream.stanzabase import ET, ElementBase
@@ -28,9 +36,6 @@ class EmailHighlighter(RegexHighlighter):
 theme = Theme({"example.email": "bold magenta"})
 console = Console(highlighter=EmailHighlighter(), theme=theme)
 
-#Clase base tomada de https://gist.github.com/deckerego/be1abbc079b206b793cf/revisions 
-#Los métodos en que se difiere fueron agregados en base a la documentos y los xp e iq 
-#a agregar con la clase sleekxmpp
 
 def register(user, passw):
     usuario = user
@@ -114,6 +119,7 @@ class Client(sleekxmpp.ClientXMPP):
 
             console = Console()
             console.print(table, justify="center")
+            print('\n')
 
     def add_to_roster_notifcation(self, presence):
         if presence['from'].bare != self.boundjid.bare:
@@ -126,6 +132,7 @@ class Client(sleekxmpp.ClientXMPP):
 
             console = Console()
             console.print(table, justify="center")
+            print('\n')
     
     def remove_to_roster_notifcation(self, presence):
         if presence['from'].bare != self.boundjid.bare:
@@ -138,6 +145,7 @@ class Client(sleekxmpp.ClientXMPP):
 
             console = Console()
             console.print(table, justify="center")
+            print('\n')
 
     # Trigger when someone got online
     def user_isonline(self, presence):
@@ -151,6 +159,7 @@ class Client(sleekxmpp.ClientXMPP):
 
             console = Console()
             console.print(table, justify="center")
+            print('\n')
         
     #example code to iterate all roster including groups took from rooster_browser https://github.com/fritzy/SleekXMPP/blob/develop/examples/roster_browser.py
     def listFriends(self):
@@ -160,7 +169,6 @@ class Client(sleekxmpp.ClientXMPP):
             print('Error: %s' % err.iq['error']['condition'])
         except IqTimeout:
             print('Error: Request timed out')
-        self.send_presence()
 
 
         print('Waiting for presence updates...\n')
@@ -193,8 +201,8 @@ class Client(sleekxmpp.ClientXMPP):
                 temp.append(name)
                 temp.append(jid)
                 temp.append(sub)
+                temp.append(show)
                 temp.append(status)
-                temp.append(res+show)
                 
                 data.append(temp)
         return data
@@ -227,6 +235,7 @@ class Client(sleekxmpp.ClientXMPP):
 
             console = Console()
             console.print(table, justify="center")
+            print('\n')
         
 
         self.received.add(pres['from'].bare)
@@ -238,6 +247,7 @@ class Client(sleekxmpp.ClientXMPP):
     def alertFriend(self):
         self.get_roster()
     
+    #send chat notifications,examples of stanzas where took from https://xmpp.org/extensions/xep-0085.html
     def sendNotification(self, to, body, ntype):
         message = self.Message()
         message['to'] = to
@@ -368,11 +378,24 @@ class Client(sleekxmpp.ClientXMPP):
     def send_msg(self, recipient, body):
         self.sendNotification(recipient, 'Writing a message', 'composing')
         time.sleep(5)
-        self.send_message(mto=recipient,mbody=body,mtype="chat")
+        try:
+            self.send_message(mto=recipient,mbody=body,mtype="chat")
+        except IqError as err:
+            print('Error: %s' % err.iq['error']['condition'])
+        except IqTimeout:
+            print('Error: Request timed out')
     
+    # method took from example of SleekXMPP https://github.com/fritzy/SleekXMPP/blob/develop/examples/muc.py
     def send_msg_room(self, room, body):
-        self.send_message(mto=room, mbody=body, mtype='groupchat')
+        try:
+            self.send_message(mto=room, mbody=body, mtype='groupchat')
+        except IqError as err:
+            print('Error: %s' % err.iq['error']['condition'])
+        except IqTimeout:
+            print('Error: Request timed out')
 
+    # Method to create a room using plugin xep0045
+    # method took from example of SleekXMPP https://github.com/fritzy/SleekXMPP/blob/develop/examples/muc.py
     def create_room(self, room, nickname):
         try:
             self.plugin['xep_0045'].joinMUC(room, nickname, pstatus="Conferencia Creada", pfrom=self.boundjid.bare, wait=True)
@@ -385,6 +408,7 @@ class Client(sleekxmpp.ClientXMPP):
             raise Exception("Server not responding")
 
     
+    # method took from example of SleekXMPP https://github.com/fritzy/SleekXMPP/blob/develop/examples/muc.py
     def join_create_room(self, room, nickname):
         try:
             self.plugin['xep_0045'].joinMUC(room, nickname)
@@ -425,12 +449,6 @@ class Client(sleekxmpp.ClientXMPP):
         except IqTimeout:
             raise Exception("Server not responding") 
 
-        #stream = self['xep_0047'].open_stream(to)
-
-        #print(stream)
-        #with open(filename) as f:
-         #   data = f.read()
-          #  stream.sendall(data)
 
     def deleteUser(self, username):
         delete = self.Iq()
@@ -440,7 +458,9 @@ class Client(sleekxmpp.ClientXMPP):
         delete.append(itemXML)
         try:
             delete.send(now=True)
+            self.disconnect()
             print("Account deleted succesfuly")
+            print('\n')
         except IqError as e:
             raise Exception("Unable to delete username", e)
             sys.exit(1)
@@ -449,6 +469,7 @@ class Client(sleekxmpp.ClientXMPP):
 
     def receive(self, message):
         if len(message['body']) > 3000:
+            print('\n')
             print("You have received and image go check it out")
             received = message['body'].encode('utf-8')
             received = base64.decodebytes(received)
