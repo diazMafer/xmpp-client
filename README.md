@@ -56,6 +56,52 @@ python main.py or python3 main.py
 
 ## Usage
 
+When the main.py is already running a menu is going to be displayed with several options.
+
+#### Register
+Choose option 1 and enter the jid and the password for the new account
+
+#### Login 
+Choose option 2 and enter your jid and the password of your account
+
+#### Logout
+Choose option 3 to logout
+
+#### Delete account
+Choose option 4 and enter jid to be deleted
+
+#### Show contacts
+Choose option 5
+
+#### Show all users in server
+Choose option 6
+
+#### Add Contact to Roster
+Choose option 7
+
+#### Get user info
+Choose option 8 and enter the username which you want to see all info
+
+#### Send Message
+Choose option 9 and enter de jid and the message
+
+#### Send Files - Limited functionality
+Choose option 10 and enter jid to send file and enter the path of the file
+
+#### Create Room
+Choose option 11 and enter room name and your nickname 
+
+#### Join Room
+Choose option 12 and enter room name and your nickname
+
+#### Send Room Message
+Choose option 13 and enter room name and your message
+
+#### Send Presence Stanza
+Choose option 14, and choose new show status and enter message
+
+#### Exit
+Choose option 15
 
 
 ## Develop with
